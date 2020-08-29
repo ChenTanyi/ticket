@@ -94,6 +94,7 @@ def main():
     with requests.session() as sess:
         sess.headers.update(headers)
         now = datetime.utcnow()
+        logging.info(now)
         if now.minute < 5:
             send_msg('Alive')
         for query in QUERIES:
