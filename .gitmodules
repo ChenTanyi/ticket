@@ -1,0 +1,3 @@
+[submodule "train-pr"]
+	path = train-pr
+	url = git@github.com:chentanyi/train-pr

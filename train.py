@@ -3,6 +3,7 @@ import os
 import re
 import time
 import json
+import yaml
 import requests
 import logging
 from datetime import datetime
@@ -29,7 +30,7 @@ API_COLUMN = [
     'exchange_train_flag', '候补标记', '候补座位限制'
 ]
 
-QUERIES = json.loads(os.environ['QUERY'])
+QUERIES = yaml.load(os.environ['QUERY'])
 
 
 def get_header(s):
