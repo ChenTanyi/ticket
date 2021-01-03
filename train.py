@@ -19,7 +19,8 @@ If-Modified-Since: 0
 Referer: {1}
 Sec-Fetch-Site: same-origin
 User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36
-X-Requested-With: XMLHttpRequest'''.format(os.environ['COOKIE'], os.environ['REFERER'])
+X-Requested-With: XMLHttpRequest'''.format(os.environ['TRAIN_COOKIE'],
+                                           os.environ['TRAIN_REFERER'])
 
 API_COLUMN = [
     '', '按钮', '列车号', '车次', '起始站代码', '到达站代码', '出发站', '到达站', '出发时间', '到达时间', '历时',
@@ -30,7 +31,7 @@ API_COLUMN = [
     'exchange_train_flag', '候补标记', '候补座位限制'
 ]
 
-QUERIES = yaml.load(os.environ['QUERY'])
+QUERIES = yaml.safe_load(os.environ['TRAIN_QUERY'])
 
 
 def get_header(s):
