@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
+import os
+import re
 import requests
+
+
+def get_header(s):
+    headers = dict()
+    for line in s.strip().split('\n'):
+        k, v = re.match(r'(.*?): (.*)', line.strip()).groups()
+        headers[k] = v
+    return headers
+
+
+def send_msg(title, msg):
+    server_key = os.environ['FIREBASE_SERVER_KEY']
+    r = notify(server_key, title, msg, timeout = 10)
+    r.raise_for_status()
 
 
 def notify(key: str, title: str, body: str, **kwargs) -> requests.Response:

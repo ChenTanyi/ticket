@@ -4,6 +4,7 @@ import re
 import time
 import json
 import yaml
+import common
 import requests
 import logging
 from datetime import datetime
@@ -34,19 +35,8 @@ API_COLUMN = [
 QUERIES = yaml.safe_load(os.environ['TRAIN_QUERY'])
 
 
-def get_header(s):
-    headers = dict()
-    for line in s.strip().split('\n'):
-        k, v = re.match(r'(.*?): (.*)', line.strip()).groups()
-        headers[k] = v
-    return headers
-
-
 def send_msg(msg):
-    server_key = os.environ['FIREBASE_SERVER_KEY']
-    import notification
-    r = notification.notify(server_key, 'Train', msg, timeout = 10)
-    r.raise_for_status()
+    common.send_msg('Train', msg)
 
 
 def request(sess, url, start_time2tickets):
@@ -91,12 +81,12 @@ def request(sess, url, start_time2tickets):
 
 
 def main():
-    headers = get_header(H)
+    headers = common.get_header(H)
     with requests.session() as sess:
         sess.headers.update(headers)
         now = datetime.utcnow()
         logging.info(now)
-        if now.minute < 5:
+        if now.minute < 2:
             send_msg('Alive')
         for query in QUERIES:
             if query['url'] != '':
