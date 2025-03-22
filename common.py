@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
+import ctypes
+import logging
 import os
 import re
 import requests
+import sys
 
 
 def get_header(s):
@@ -13,9 +16,19 @@ def get_header(s):
 
 
 def send_msg(title, msg):
-    server_key = os.environ['FIREBASE_SERVER_KEY']
-    r = notify(server_key, title, msg, timeout = 10)
-    r.raise_for_status()
+    server_key = os.environ.get('FIREBASE_SERVER_KEY')
+    if server_key:
+        r = notify(server_key, title, msg, timeout = 10)
+        r.raise_for_status()
+    else:
+        notify_desktop(title, msg)
+
+
+def notify_desktop(title, msg):
+    if sys.platform == 'win32':
+        ctypes.windll.user32.MessageBoxW(None, msg, title, 0)
+    else:
+        logging.error(f'unknow platform {sys.platform}')
 
 
 def notify(key: str, title: str, body: str, **kwargs) -> requests.Response:
