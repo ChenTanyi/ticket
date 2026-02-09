@@ -20,7 +20,7 @@ If-Modified-Since: 0
 Referer: https://kyfw.12306.cn/otn/leftTicket/init
 Sec-Fetch-Site: same-origin
 User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36
-X-Requested-With: XMLHttpRequest'''.format(os.environ.get('TRAIN_COOKIE'), '')
+X-Requested-With: XMLHttpRequest'''.format(os.environ.get('TRAIN_COOKIE', ''))
 
 API_COLUMN = [
     '', '按钮', '列车号', '车次', '起始站代码', '到达站代码', '出发站', '到达站', '出发时间', '到达时间', '历时',
@@ -32,11 +32,14 @@ API_COLUMN = [
 ]
 
 SAMPLE_QUERIES = '''\
-- url: https://kyfw.12306.cn/otn/leftTicket/queryR?leftTicketDTO.train_date=2025-04-04&leftTicketDTO.from_station=IOQ&leftTicketDTO.to_station=IZQ&purpose_codes=ADULT
-  start_times:
-    06:36:
-      seats: [二等座]
-      unwant_tickets: [无]
+- url: https://kyfw.12306.cn/otn/leftTicket/queryG?leftTicketDTO.train_date=2026-02-23&leftTicketDTO.from_station=CBQ&leftTicketDTO.to_station=IOQ&purpose_codes=ADULT
+  config:
+    start: [上海虹桥]
+    end: [北京南]
+    time_range: ['00:00', '23:59']
+    start_time: '07:54'
+    seats: [二等座, 无座]
+    unwant_tickets: [无, '', *]
 '''
 QUERIES = yaml.safe_load(os.environ.get('TRAIN_QUERY', SAMPLE_QUERIES))
 
@@ -45,7 +48,7 @@ def send_msg(msg):
     common.send_msg('Train', msg)
 
 
-def request(sess, url, start_time2tickets):
+def request(sess, url, config):
     try:
         r = sess.get(url)
         r.raise_for_status()
@@ -64,19 +67,23 @@ def request(sess, url, start_time2tickets):
             end_time = trains[9]
             msg = f'{from_station}({start_time}) -> {to_station}({end_time})\n'
 
-            tickets = {}
-            if '*' in start_time2tickets:
-                tickets = start_time2tickets['*']
-            elif start_time in start_time2tickets:
-                tickets = start_time2tickets[start_time]
-            else:
+            if 'start' in config and from_station not in config['start']:
                 continue
+            if 'end' in config and to_station not in config['end']:
+                continue
+            if 'start_time' in config and start_time != config['start_time']:
+                continue
+            if 'time_range' in config:
+                if not (config['time_range'][0] <= start_time <= config['time_range'][1]):
+                    continue
 
+            seats = config.get('seats', ['二等座', '无座'])
+            unwant_tickets = config.get('unwant_tickets', ['无', '', '*'])
             need_send = False
-            for seat in tickets.get('seats'):
+            for seat in seats:
                 seat_index = API_COLUMN.index(seat)
                 msg += f'{seat}: {trains[seat_index]}\n'
-                if trains[seat_index] not in tickets.get('unwant_tickets'):
+                if trains[seat_index] not in unwant_tickets:
                     need_send = True
 
             logging.info(msg)
@@ -92,14 +99,17 @@ def main():
         sess.headers.update(headers)
         now = datetime.datetime.now(datetime.UTC)
         logging.info(now)
-        if now.minute < 2:
+        if common.is_remote_msg() and now.minute < 2:
             send_msg('Alive')
         for query in QUERIES:
             if query['url'] != '':
-                request(sess, query['url'], query['start_times'])
+                request(sess, query['url'], query['config'])
+                time.sleep(1)
 
 
 if __name__ == '__main__':
     logging.basicConfig(
         format = '%(asctime)s %(levelname)s %(message)s', level = 'INFO')
-    main()
+    while True:
+        main()
+        time.sleep(10)

@@ -10,9 +10,13 @@ import sys
 def get_header(s):
     headers = dict()
     for line in s.strip().split('\n'):
-        k, v = re.match(r'(.*?): (.*)', line.strip()).groups()
-        headers[k] = v
+        k, v = re.match(r'(.*?): (.*)', line).groups()
+        headers[k.strip()] = v.strip()
     return headers
+
+
+def is_remote_msg():
+    return os.environ.get('FIREBASE_SERVER_KEY') is not None
 
 
 def send_msg(title, msg):
@@ -27,6 +31,8 @@ def send_msg(title, msg):
 def notify_desktop(title, msg):
     if sys.platform == 'win32':
         ctypes.windll.user32.MessageBoxW(None, msg, title, 0)
+    elif sys.platform == 'darwin':
+        os.system((f'osascript -e \'display notification "{msg}" with title "{title}"\''))
     else:
         logging.error(f'unknow platform {sys.platform}')
 
