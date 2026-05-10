@@ -50,11 +50,15 @@ def send_msg(msg):
 
 def request(sess, url, config):
     try:
-        r = sess.get(url)
+        r = sess.get(url, timeout = 10)
         r.raise_for_status()
         resp = r.json()
     except Exception as e:
-        send_msg(f'Requests Error: {e}')
+        msg = f'Requests Error: {e}'
+        if common.is_remote_msg():
+            send_msg(msg)
+        else:
+            logging.error(msg)
         return
     try:
         code_to_station = resp['data']['map']
@@ -71,7 +75,7 @@ def request(sess, url, config):
                 continue
             if 'end' in config and to_station not in config['end']:
                 continue
-            if 'start_time' in config and start_time != config['start_time']:
+            if 'start_times' in config and start_time not in config['start_times']:
                 continue
             if 'time_range' in config:
                 if not (config['time_range'][0] <= start_time <= config['time_range'][1]):
@@ -90,7 +94,11 @@ def request(sess, url, config):
             if need_send:
                 send_msg(msg)
     except Exception as e:
-        send_msg(f'Parse Error: {e}')
+        msg = f'Parse Error: {e}'
+        if common.is_remote_msg():
+            send_msg(msg)
+        else:
+            logging.error(msg)
 
 
 def main():
@@ -104,7 +112,7 @@ def main():
         for query in QUERIES:
             if query['url'] != '':
                 request(sess, query['url'], query['config'])
-                time.sleep(1)
+                time.sleep(10)
 
 
 if __name__ == '__main__':

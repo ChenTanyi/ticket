@@ -32,7 +32,8 @@ def notify_desktop(title, msg):
     if sys.platform == 'win32':
         ctypes.windll.user32.MessageBoxW(None, msg, title, 0)
     elif sys.platform == 'darwin':
-        os.system((f'osascript -e \'display notification "{msg}" with title "{title}"\''))
+        msg = re.sub(r'[^\w ]', '', msg)
+        os.system(f'osascript -e \'display notification "{msg}" with title "{title}"\'')
     else:
         logging.error(f'unknow platform {sys.platform}')
 
